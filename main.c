@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <sys/stat.h>
 
 // thank you https://stackoverflow.com/a/3208376
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
@@ -61,17 +62,23 @@ bool testDisk(char *diskPath)
     size_t diskLen;
 
     disk = fopen(diskPath, "r+");
+    diskLen = fileLen(disk);
 
     printf("\ndisk: %s\nsize: %zu\n\n", diskPath, diskLen);
 
     // write 1's then test
-    ret = ret || testDiskWriteDataAndCheck(disk, diskLen, 0b11111111);
+    printf("all 1's test\n");
+    ret = (!testDiskWriteDataAndCheck(disk, diskLen, 0b11111111)) || ret;
 
     // write 0's then test
-    ret = ret || testDiskWriteDataAndCheck(disk, diskLen, 0b00000000);
+    printf("completed\nall 0's test\n");
+    ret = (!testDiskWriteDataAndCheck(disk, diskLen, 0b00000000)) || ret;
 
     // write 10's then test
-    ret = ret || testDiskWriteDataAndCheck(disk, diskLen, 0b10101010);
+    printf("completed\nalternated 1's and 0's test\n");
+    ret = (!testDiskWriteDataAndCheck(disk, diskLen, 0b10101010)) || ret;
+
+    printf("completed\n");
 
     return !ret;
 
@@ -96,6 +103,11 @@ int main(int argc, char **argv)
     }
 
     bool succ = testDisk(diskPath);
+
+    if (succ)
+        printf("\nPASSED!\n");
+    else
+        printf("\nFAILED!\n");
 
     if (allocDiskPath)
         free(diskPath);
