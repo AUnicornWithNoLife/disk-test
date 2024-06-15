@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
 // thank you https://stackoverflow.com/a/3208376
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
 #define BYTE_TO_BINARY(byte)  \
@@ -27,29 +26,6 @@ size_t fileLen(FILE *file) // will set file back to the start so be carefull if 
     return r;
 }
 
-bool testDisk(char *diskPath)
-{
-    bool ret = false;
-    FILE *disk;
-    size_t diskLen;
-
-    disk = fopen(diskPath, "r+");
-
-    printf("\ndisk: %s\nsize: %d\n\n", diskPath, diskLen);
-
-    // write 1's then test
-    ret = ret || testDiskWriteDataAndCheck(disk, diskLen, 0b11111111);
-
-    // write 0's then test
-    ret = ret || testDiskWriteDataAndCheck(disk, diskLen, 0b00000000);
-
-    // write 10's then test
-    ret = ret || testDiskWriteDataAndCheck(disk, diskLen, 0b10101010);
-
-    return !ret;
-
-}
-
 bool testDiskWriteDataAndCheck(FILE *disk, size_t diskLen, uint8_t data)
 {
     bool ret = true;
@@ -67,33 +43,43 @@ bool testDiskWriteDataAndCheck(FILE *disk, size_t diskLen, uint8_t data)
 
         if (dat != data)
         {
-            printf("expected " BYTE_TO_BINARY_PATTERN " got " BYTE_TO_BINARY_PATTERN " at 0x%X\n", BYTE_TO_BINARY(data), BYTE_TO_BINARY(dat), i);
+            printf("expected " BYTE_TO_BINARY_PATTERN " got " BYTE_TO_BINARY_PATTERN " at 0x%zX\n", BYTE_TO_BINARY(data), BYTE_TO_BINARY(dat), i);
 
             ret = false;
         }
     }
 
+    rewind(disk);
+
     return ret;
+}
+
+bool testDisk(char *diskPath)
+{
+    bool ret = false;
+    FILE *disk;
+    size_t diskLen;
+
+    disk = fopen(diskPath, "r+");
+
+    printf("\ndisk: %s\nsize: %zu\n\n", diskPath, diskLen);
+
+    // write 1's then test
+    ret = ret || testDiskWriteDataAndCheck(disk, diskLen, 0b11111111);
+
+    // write 0's then test
+    ret = ret || testDiskWriteDataAndCheck(disk, diskLen, 0b00000000);
+
+    // write 10's then test
+    ret = ret || testDiskWriteDataAndCheck(disk, diskLen, 0b10101010);
+
+    return !ret;
+
 }
 
 int main(int argc, char **argv)
 {
-    printf("disk test - a primative disk testing tool by rose apollo\nDO NOT USE unless you have read the src code and KNOW what you are doing\nthis tool will ONLY run on POSIX compliant systems - eg: freeBSD / macOS / Linux\nI know what i am doing: [y/N] ");
-    char key;
-    for (; key != '\r' || key != 'n' || key != 'N' || key != 'y' || key != 'Y'; key = getchar()){}
-
-    switch (key)
-    {
-        case 'n':
-        case 'N':
-        case '\r':
-            printf("\nExiting\n\n");
-            return 0;
-        case 'y':
-        case 'Y':
-            putchar('\n');
-            break;
-    }
+    printf("disk test - a primative disk testing tool by rose apollo\nDO NOT USE unless you have read the src code and KNOW what you are doing\nthis tool will ONLY run on POSIX compliant systems - eg: freeBSD / macOS / Linux\n");
 
     char *diskPath;
     bool allocDiskPath = false;
@@ -105,7 +91,7 @@ int main(int argc, char **argv)
         diskPath = malloc(sizeof(char) * 4096);
         printf("path to disk: ");
         scanf("%4096s", diskPath);
-        putchar("\n");
+        printf("\n");
         allocDiskPath = true;
     }
 
